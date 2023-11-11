@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: Quicksand;
+  src: url(/fonts/Quicksand-Regular.ttf);
+  font-weight: normal;
+}
