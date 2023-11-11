@@ -1,5 +1,7 @@
 package templates
 
+import "github.com/wing8169/golang-htmx-chat-app/templates/components"
+
 templ Index() {
 	<html lang="en">
 		<head>
@@ -8,6 +10,7 @@ templ Index() {
 			<link href="/css/output.css" rel="stylesheet"/>
 			<script src="https://unpkg.com/htmx.org@1.9.8"></script>
 			<script src="https://unpkg.com/htmx.org/dist/ext/multi-swap.js"></script>
+			<script src="https://unpkg.com/htmx.org/dist/ext/ws.js"></script>
 			<link
  				href="https://fonts.googleapis.com/icon?family=Material+Icons"
  				rel="stylesheet"
@@ -15,8 +18,11 @@ templ Index() {
 			<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"/>
 		</head>
 		<body>
-			<div class="h-screen w-screen bg-black flex flex-col justify-center items-center relative">
-				<div class="w-screen bg-black flex flex-col justify-center items-center relative max-w-2xl"></div>
+			<div class="min-h-screen w-screen bg-black flex flex-col justify-center items-center relative" hx-ext="ws" ws-connect="/ws/chat">
+				<div class="w-screen bg-black flex flex-col justify-center items-center relative max-w-2xl gap-4" id="chat-room">
+					@components.Message("Welcome to HTMX")
+					@components.Message("====")
+				</div>
 			</div>
 		</body>
 	</html>
