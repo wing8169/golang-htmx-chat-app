@@ -19,6 +19,9 @@ templ Index() {
 		</head>
 		<body>
 			<div class="min-h-screen w-screen bg-black flex flex-col justify-center items-center relative" hx-ext="ws" ws-connect="/ws/chat">
+				<form id="form" ws-send>
+					<input name="chat_message"/>
+				</form>
 				<div class="w-screen bg-black flex flex-col justify-center items-center relative max-w-2xl gap-4" id="chat-room">
 					@components.Message("Welcome to HTMX")
 					@components.Message("====")

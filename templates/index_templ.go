@@ -61,7 +61,7 @@ func Index() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</script><link href=\"https://fonts.googleapis.com/icon?family=Material+Icons\" rel=\"stylesheet\"><link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200\"></head><body><div class=\"min-h-screen w-screen bg-black flex flex-col justify-center items-center relative\" hx-ext=\"ws\" ws-connect=\"/ws/chat\"><div class=\"w-screen bg-black flex flex-col justify-center items-center relative max-w-2xl gap-4\" id=\"chat-room\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</script><link href=\"https://fonts.googleapis.com/icon?family=Material+Icons\" rel=\"stylesheet\"><link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200\"></head><body><div class=\"min-h-screen w-screen bg-black flex flex-col justify-center items-center relative\" hx-ext=\"ws\" ws-connect=\"/ws/chat\"><form id=\"form\" ws-send><input name=\"chat_message\"></form><div class=\"w-screen bg-black flex flex-col justify-center items-center relative max-w-2xl gap-4\" id=\"chat-room\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
