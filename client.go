@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -19,6 +20,11 @@ type Client struct {
 	MessageChannel chan string
 }
 
+var (
+	pongWaitTime = time.Second * 10
+	pingInterval = time.Second * 9
+)
+
 func NewClient(conn *websocket.Conn, manager *Manager) *Client {
 	return &Client{
 		Conn:           conn,
@@ -30,6 +36,18 @@ func NewClient(conn *websocket.Conn, manager *Manager) *Client {
 }
 
 func (c *Client) ReadMessages(ctx echo.Context) {
+	if err := c.Conn.SetReadDeadline(time.Now().Add(pongWaitTime)); err != nil {
+		ctx.Logger().Error(err)
+		return
+	}
+	c.Conn.SetPongHandler(func(appData string) error {
+		if err := c.Conn.SetReadDeadline(time.Now().Add(pongWaitTime)); err != nil {
+			ctx.Logger().Error(err)
+			return err
+		}
+		fmt.Println("pong")
+		return nil
+	})
 	defer func() {
 		c.Conn.Close()
 		c.Manager.ClientListEventChannel <- &ClientListEvent{
@@ -44,11 +62,14 @@ func (c *Client) ReadMessages(ctx echo.Context) {
 			return
 		}
 		fmt.Printf("%s\n", msg)
-		c.MessageChannel <- string(msg)
+		if err := c.Manager.WriteMessage(string(msg), "general"); err != nil {
+			ctx.Logger().Error(err)
+			return
+		}
 	}
 }
 
-func (c *Client) WriteMessage(ctx echo.Context) {
+func (c *Client) WriteMessage(echoContext echo.Context, ctx context.Context) {
 	defer func() {
 		c.Conn.Close()
 		c.Manager.ClientListEventChannel <- &ClientListEvent{
@@ -56,6 +77,7 @@ func (c *Client) WriteMessage(ctx echo.Context) {
 			EventType: "REMOVE",
 		}
 	}()
+	ticker := time.NewTicker(pingInterval)
 	for {
 		select {
 		case text, ok := <-c.MessageChannel:
@@ -66,15 +88,19 @@ func (c *Client) WriteMessage(ctx echo.Context) {
 			component := components.Message(text)
 			buffer := &bytes.Buffer{}
 			component.Render(context.Background(), buffer)
-
-			for _, client := range c.Manager.ClientList {
-				err := client.Conn.WriteMessage(websocket.TextMessage, buffer.Bytes())
-				if err != nil {
-					ctx.Logger().Error(err)
-				}
+			err := c.Conn.WriteMessage(websocket.TextMessage, buffer.Bytes())
+			if err != nil {
+				echoContext.Logger().Error(err)
+				return
 			}
-		case <-context.Background().Done():
+		case <-ctx.Done():
 			return
+		case <-ticker.C:
+			if err := c.Conn.WriteMessage(websocket.PingMessage, []byte("")); err != nil {
+				echoContext.Logger().Error(err)
+				return
+			}
+			fmt.Println("Ping")
 		}
 	}
 }

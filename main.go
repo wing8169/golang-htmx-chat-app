@@ -16,12 +16,16 @@ var (
 func main() {
 	e := echo.New()
 	manager := NewManager()
-	go manager.HandleClientListEventChannel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go manager.HandleClientListEventChannel(ctx)
 	e.GET("/", func(c echo.Context) error {
 		component := templates.Index()
-		return component.Render(context.Background(), c.Response().Writer)
+		return component.Render(ctx, c.Response().Writer)
 	})
-	e.GET("/ws/chat", manager.Handle)
+	e.GET("/ws/chat", func(c echo.Context) error {
+		return manager.Handle(c, ctx)
+	})
 
 	e.GET("/components", func(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotImplemented, "Not supported yet.")

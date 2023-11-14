@@ -54,7 +54,7 @@ func (m *Manager) HandleClientListEventChannel(ctx context.Context) {
 	}
 }
 
-func (m *Manager) Handle(c echo.Context) error {
+func (m *Manager) Handle(c echo.Context, ctx context.Context) error {
 	ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
 		return err
@@ -68,7 +68,17 @@ func (m *Manager) Handle(c echo.Context) error {
 	}
 
 	go newClient.ReadMessages(c)
-	go newClient.WriteMessage(c)
+	go newClient.WriteMessage(c, ctx)
 
+	return nil
+}
+
+func (m *Manager) WriteMessage(msg string, chatroom string) error {
+	for _, client := range m.ClientList {
+		if client.Chatroom != chatroom {
+			continue
+		}
+		client.MessageChannel <- msg
+	}
 	return nil
 }
