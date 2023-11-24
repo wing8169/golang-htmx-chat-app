@@ -1,0 +1,17 @@
+package components
+
+script showSnackbar(key string) {
+	document.body.addEventListener('htmx:responseError', function (evt) {
+        // get the snackbar content div
+        const el = document.getElementById(key);
+        // reset the content with the new error message
+        el.innerHTML = `<p class="px-4 py-[12px] rounded-2xl bg-red-500 text-white pointer-events-auto fade-out">${evt.detail.error}</p>`;
+    });
+}
+
+templ Snackbar(key string) {
+	// #Event - htmx:responseError
+	<body onload={ showSnackbar(key) }>
+		<div id={ key } class="fixed top-0 left-0 w-screen h-screen flex flex-col items-center justify-end pb-12 pointer-events-none z-10"></div>
+	</body>
+}
