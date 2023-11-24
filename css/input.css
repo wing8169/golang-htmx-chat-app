@@ -7,3 +7,21 @@
   src: url(/fonts/Quicksand-Regular.ttf);
   font-weight: normal;
 }
+
+form {
+  margin-block-end: 0px;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-text-fill-color: #fff;
+  background-color: #1b1b6c;
+  transition: background-color 5000s ease-in-out 0s;
+}

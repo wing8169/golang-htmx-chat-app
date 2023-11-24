@@ -1,26 +1,13 @@
 package templates
 
+import "github.com/wing8169/golang-htmx-chat-app/templates/layout"
+
 templ Index() {
-	<html lang="en">
-		<head>
-			<meta charset="utf-8"/>
-			<title>Login</title>
-			<link href="/css/output.css" rel="stylesheet"/>
-			<script src="https://unpkg.com/htmx.org@1.9.8"></script>
-			<script src="https://unpkg.com/htmx.org/dist/ext/multi-swap.js"></script>
-			<script src="https://unpkg.com/htmx.org/dist/ext/ws.js"></script>
-			<link
- 				href="https://fonts.googleapis.com/icon?family=Material+Icons"
- 				rel="stylesheet"
-			/>
-			<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"/>
-		</head>
-		<body>
-			<form hx-replace-url="true" hx-post="/login" class="min-h-screen w-screen bg-black flex flex-col justify-center items-center relative gap-6">
-				<input name="username"/>
-				<input name="password" type="password"/>
-				<button type="submit" class="text-white">Login</button>
-			</form>
-		</body>
-	</html>
+	@layout.MainLayout() {
+		<form hx-replace-url="true" hx-post="/login" class="min-h-screen w-screen flex flex-col justify-center items-center relative gap-6 bg-[#292F3F]">
+			<input name="username" type="text"/>
+			<input name="password" type="password"/>
+			<button type="submit" class="text-white">Login</button>
+		</form>
+	}
 }
