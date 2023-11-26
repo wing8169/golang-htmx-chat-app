@@ -17,6 +17,7 @@ const (
 )
 
 type Claims struct {
+	ID       string `json:"id"`
 	Username string `json:"username"`
 	jwt.StandardClaims
 }
@@ -56,6 +57,7 @@ func generateRefreshToken(user *dto.UserDto) (string, time.Time, error) {
 func generateToken(user *dto.UserDto, expirationTime time.Time, secret []byte) (string, time.Time, error) {
 	// Create the JWT claims, which includes the username and expiry time.
 	claims := &Claims{
+		ID:       user.ID,
 		Username: user.Username,
 		StandardClaims: jwt.StandardClaims{
 			// In JWT, the expiry time is expressed as unix seconds.
@@ -132,6 +134,22 @@ func TokenRefresherMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 			}
 		}
 
+		return next(c)
+	}
+}
+
+// GuestMiddleware middleware, which blocks user from accessing guest routes.
+func GuestMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		accessToken, err := c.Cookie(AccessTokenCookieName)
+		if err != nil {
+			return next(c)
+		}
+		if accessToken.Value != "" {
+			// TODO: Fix the redirect
+			return next(c)
+			// return c.Redirect(http.StatusMovedPermanently, "/chat")
+		}
 		return next(c)
 	}
 }

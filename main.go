@@ -2,15 +2,17 @@ package main
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/websocket"
 	echojwt "github.com/labstack/echo-jwt"
 	"github.com/labstack/echo/v4"
-	"github.com/wing8169/golang-htmx-chat-app/dto"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/wing8169/golang-htmx-chat-app/services"
 	"github.com/wing8169/golang-htmx-chat-app/templates"
-	"golang.org/x/crypto/bcrypt"
 )
 
 var (
@@ -18,13 +20,38 @@ var (
 )
 
 func main() {
+	db, err := sql.Open("sqlite3", "./db/chat.db")
+	if err != nil {
+		log.Println(err)
+	}
+	defer db.Close()
+
+	sqlStmt := `
+	create table if not exists user (id text not null primary key, username varchar(255), password varchar(255));
+	`
+	_, err = db.Exec(sqlStmt)
+	if err != nil {
+		log.Printf("%q: %s\n", err, sqlStmt)
+		return
+	}
+
+	userService := &services.UserService{
+		DB: db,
+	}
+
 	e := echo.New()
 	manager := NewManager()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go manager.HandleClientListEventChannel(ctx)
-	e.GET("/", func(c echo.Context) error {
+	unguardedRoutes := e.Group("/")
+	unguardedRoutes.Use(services.GuestMiddleware)
+	unguardedRoutes.GET("", func(c echo.Context) error {
 		component := templates.Index()
+		return component.Render(ctx, c.Response().Writer)
+	})
+	unguardedRoutes.GET("register", func(c echo.Context) error {
+		component := templates.Register()
 		return component.Render(ctx, c.Response().Writer)
 	})
 	guardedRoutes := e.Group("/chat")
@@ -45,30 +72,51 @@ func main() {
 	e.POST("/login", func(c echo.Context) error {
 		username := c.FormValue("username")
 		password := c.FormValue("password")
-
-		var loggedInUser *dto.UserDto
-
-		users := services.GetUsers()
-
-		for _, user := range users {
-			if user.Username != username {
-				continue
-			}
-			if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err == nil {
-				loggedInUser = user
-				break
-			}
-		}
-
-		if loggedInUser == nil {
+		loggedInUser, err := userService.LoginUser(username, password)
+		if err != nil {
+			fmt.Println(err)
 			return echo.NewHTTPError(http.StatusUnauthorized, "Invalid login.")
 		}
 
 		// Assign JWT tokens
-		err := services.GenerateTokensAndSetCookies(loggedInUser, c)
+		err = services.GenerateTokensAndSetCookies(loggedInUser, c)
 
 		if err != nil {
-			return echo.NewHTTPError(http.StatusUnauthorized, "Token is incorrect")
+			return echo.NewHTTPError(http.StatusUnauthorized, "Token failed to be generated.")
+		}
+
+		return c.Redirect(http.StatusMovedPermanently, "/chat")
+	})
+
+	e.POST("/register", func(c echo.Context) error {
+		username := c.FormValue("username")
+		password := c.FormValue("password")
+		confirmPassword := c.FormValue("confirmPassword")
+
+		// password validation
+		if password != confirmPassword {
+			return echo.NewHTTPError(http.StatusBadRequest, "Password is not the same as confirm password.")
+		}
+
+		// user validation
+		users, err := userService.GetUsers(username)
+		if err != nil || len(users) > 0 {
+			fmt.Println(err)
+			return echo.NewHTTPError(http.StatusBadRequest, "Invalid credentials.")
+		}
+
+		// create a new user
+		newUser, err := userService.CreateUser(username, password)
+		if err != nil {
+			fmt.Println(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Invalid login.")
+		}
+
+		// Assign JWT tokens
+		err = services.GenerateTokensAndSetCookies(newUser, c)
+
+		if err != nil {
+			return echo.NewHTTPError(http.StatusUnauthorized, "Token failed to be generated.")
 		}
 
 		return c.Redirect(http.StatusMovedPermanently, "/chat")
